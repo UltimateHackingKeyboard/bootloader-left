@@ -11,4 +11,4 @@ make upload AVRDUDE_PROGRAMMER={ProgrammerName} AVRDUDE_PORT={ProgrammerPort}  #
 make  fuses AVRDUDE_PROGRAMMER={ProgrammerName} AVRDUDE_PORT={ProgrammerPort}  # Set the fuses.
 ```
 
-This bootloader is based on the Optiboot bootloader [[originally hosted at Google Code](https://code.google.com/p/optiboot/) but this repo has been forked [from a GitHub repo](https://github.com/SodaqMoja/optiboot) because collaboration is easier here.
+This bootloader is based on the Optiboot bootloader [originally hosted at Google Code](https://code.google.com/p/optiboot/) but this repo has been forked [from a GitHub repo](https://github.com/SodaqMoja/optiboot) because collaboration is easier here.
