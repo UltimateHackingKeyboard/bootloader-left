@@ -644,3 +644,20 @@ clean:
 
 %.bin: %.elf
 	$(OBJCOPY) -j .text -j .data -j .version --set-section-flags .version=alloc,load -O binary $< $@
+
+# The following variables and rules were added for the Ultimate Hacking Keyboard.
+
+MAKE_MCU            = atmega88
+MAKE_FLAGS          = BAUD_RATE=38400 LED=B0 LED_START_FLASHES=3 LED_DATA_FLASH=1
+
+AVRDUDE_MCU         = m88
+AVRDUDE_PROGRAMMER ?= jtagicemkii
+AVRDUDE_PORT       ?= usb
+BASE_AVRDUDE_FLAGS := -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
+
+upload:
+	make $(MAKE_FLAGS) $(MAKE_MCU) && \
+	avrdude $(BASE_AVRDUDE_FLAGS) -U flash:w:optiboot_atmega88.hex
+
+fuses:
+	avrdude $(BASE_AVRDUDE_FLAGS) -U lfuse:w:0xff:m -U hfuse:w:0xdf:m -U efuse:w:0x04:m
