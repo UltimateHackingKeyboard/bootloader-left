@@ -2,3 +2,5 @@
 optiboot/bootloaders/optiboot/baudcheck.tmp.sh
 *.lst
 *.hex
+*.o
+*.elf
