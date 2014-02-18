@@ -656,8 +656,14 @@ AVRDUDE_PORT       ?= usb
 BASE_AVRDUDE_FLAGS := -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 upload:
-	make $(MAKE_FLAGS) $(MAKE_MCU) && \
+	avr-gcc -g -Wall -Os -fno-inline-small-functions -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=0   -DLED_DATA_FLASH=1 -DLED=D4    -c -o optiboot.o optiboot.c && \
+	avr-gcc -g -Wall -Os -fno-inline-small-functions -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=0   -DLED_DATA_FLASH=1 -DLED=D4  -Wl,--section-start=.text=0x1c00 -Wl,--section-start=.version=0x1ffe -o optiboot_atmega88.elf optiboot.o && \
+	avr-objcopy -j .text -j .data -j .version --set-section-flags .version=alloc,load -O ihex optiboot_atmega88.elf optiboot_atmega88.hex && \
+	avr-objdump -h -S optiboot_atmega88.elf > optiboot_atmega88.lst && \
 	avrdude $(BASE_AVRDUDE_FLAGS) -U flash:w:optiboot_atmega88.hex
 
+#	avr-gcc -g -Wall -Os -fno-inline-small-functions -fno-split-wide-types -mshort-calls -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=3   -DLED_DATA_FLASH=1 -DLED=D4    -c -o optiboot.o optiboot.c && \
+#	avr-gcc -g -Wall -Os -fno-inline-small-functions -fno-split-wide-types -mshort-calls -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=3   -DLED_DATA_FLASH=1 -DLED=D4  -Wl,--section-start=.text=0x1c00 -Wl,--section-start=.version=0x1ffe -Wl,--relax -nostartfiles -nostdlib -o optiboot_atmega88.elf optiboot.o && \
+
 fuses:
-	avrdude $(BASE_AVRDUDE_FLAGS) -U lfuse:w:0xff:m -U hfuse:w:0xdf:m -U efuse:w:0x04:m
+	avrdude $(BASE_AVRDUDE_FLAGS) -U lfuse:w:0xff:m -U hfuse:w:0xdf:m -U efuse:w:0x02:m

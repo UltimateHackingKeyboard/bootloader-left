@@ -211,11 +211,11 @@ asm("  .section .version\n"
 // This saves cycles and program memory.
 #include "boot.h"
 
-
-// We don't use <avr/wdt.h> as those routines have interrupt overhead we don't need.
-
 #include "pin_defs.h"
 #include "stk500.h"
+#include <avr/interrupt.h>
+#include <util/delay.h>
+#include <avr/wdt.h>
 
 #ifndef LED_START_FLASHES
 #define LED_START_FLASHES 0
@@ -297,7 +297,7 @@ asm("  .section .version\n"
 /* The main function is in init9, which removes the interrupt vector table */
 /* we don't need. It is also 'naked', which means the compiler does not    */
 /* generate any entry or exit code itself. */
-int main(void) __attribute__ ((OS_main)) __attribute__ ((section (".init9")));
+int main(void) /*__attribute__ ((OS_main)) __attribute__ ((section (".init9")))*/;
 void putch(char);
 uint8_t getch(void);
 static inline void getNch(uint8_t); /* "static inline" is a compiler hint to reduce code size */
@@ -402,6 +402,9 @@ void appStart(uint8_t rstFlags) __attribute__ ((naked));
 # define UART_UDR UDR3
 #endif
 
+#define MAGIC_BOOT_KEY 0xDC42ACCA
+uint32_t MagicBootKey __attribute__ ((section (".noinit")));
+
 /* main program starts here */
 int main(void) {
   uint8_t ch;
@@ -423,16 +426,42 @@ int main(void) {
   //  r1 contains zero
   //
   // If not, uncomment the following instructions:
-  // cli();
+  cli();
   asm volatile ("clr __zero_reg__");
 #if defined(__AVR_ATmega8__) || defined (__AVR_ATmega32__)
   SP=RAMEND;  // This is done by hardware reset
 #endif
 
-  // Adaboot no-wait mod
   ch = MCUSR;
   MCUSR = 0;
-  if (!(ch & _BV(EXTRF))) appStart(ch);
+
+//  watchdogReset();
+//  wdt_disable();
+  watchdogConfig(WATCHDOG_OFF);
+
+  uint8_t ShouldJumpToBootloader =  (ch & _BV(EXTRF)) ||
+                                   ((ch & _BV(WDRF)) && (MagicBootKey != MAGIC_BOOT_KEY));
+
+  LED_DDR |= _BV(LED);
+
+  if (ShouldJumpToBootloader) {
+    uint8_t i;
+    for (i=0; i<2; i++) {
+      LED_PORT ^= _BV(LED);
+      _delay_ms(250);
+      LED_PIN |= _BV(LED);
+      _delay_ms(250);
+    }
+  }
+
+  if (!ShouldJumpToBootloader) {
+    MagicBootKey = 0;
+    appStart(ch);
+  }
+
+  // Even though this is the best place to set MagicBootKey but during the firmware upgrade process
+  // it gets overwritten for some reason so it's also set inside of the STK_LEAVE_PROGMODE command.
+  MagicBootKey = MAGIC_BOOT_KEY;
 
 #if LED_START_FLASHES > 0
   // Set up Timer 1 for timeout counter
@@ -632,6 +661,10 @@ int main(void) {
       putch(SIGNATURE_2);
     }
     else if (ch == STK_LEAVE_PROGMODE) { /* 'Q' */
+
+      // Set MagicBootKey the second time after the application jump check.  This one does work.
+      MagicBootKey = MAGIC_BOOT_KEY;
+
       // Adaboot no-wait mod
       watchdogConfig(WATCHDOG_16MS);
       verifySpace();
