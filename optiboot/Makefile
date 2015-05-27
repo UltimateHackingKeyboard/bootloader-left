@@ -111,7 +111,7 @@ STK500-2 = $(STK500) -d$(MCU_TARGET) -ms -q -lCF -LCF -cUSB -I200kHz -s -wt
 
 
 OBJ        = $(PROGRAM).o
-OPTIMIZE = -Os -fno-inline-small-functions -fno-split-wide-types -mshort-calls
+OPTIMIZE = -Os -fno-inline-small-functions -fno-split-wide-types -mrelax
 
 DEFS       =
 LIBS       =
@@ -662,8 +662,10 @@ upload:
 	avr-objdump -h -S optiboot_atmega88.elf > optiboot_atmega88.lst && \
 	avrdude $(BASE_AVRDUDE_FLAGS) -U flash:w:optiboot_atmega88.hex
 
-#	avr-gcc -g -Wall -Os -fno-inline-small-functions -fno-split-wide-types -mshort-calls -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=3   -DLED_DATA_FLASH=1 -DLED=D4    -c -o optiboot.o optiboot.c && \
-#	avr-gcc -g -Wall -Os -fno-inline-small-functions -fno-split-wide-types -mshort-calls -mmcu=atmega88 -DF_CPU=16000000L  -DBAUD_RATE=38400 -DLED_START_FLASHES=3   -DLED_DATA_FLASH=1 -DLED=D4  -Wl,--section-start=.text=0x1c00 -Wl,--section-start=.version=0x1ffe -Wl,--relax -nostartfiles -nostdlib -o optiboot_atmega88.elf optiboot.o && \
+# Should these be added as additional avr-gcc options?
+#	-fno-split-wide-types
+#	-fno-split-wide-types -Wl,--relax -nostartfiles -nostdlib
 
 fuses:
+	# Default fuses -CKDIV8 +BOOTRST
 	avrdude $(BASE_AVRDUDE_FLAGS) -U lfuse:w:0xff:m -U hfuse:w:0xdf:m -U efuse:w:0x02:m
