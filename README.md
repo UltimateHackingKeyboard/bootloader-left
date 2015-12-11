@@ -1,6 +1,8 @@
 UHK left half bootloader
 ========================
 
+[![Changelog #186](https://img.shields.io/badge/changelog-%23186-lightgrey.svg)](https://changelog.com/186)
+
 This is the bootloader of the left keyboard half of the [Ultimate Hacking Keyboard](https://UltimateHackingKeyboard.com).
 
 `{ProgrammerName}` and `{ProgrammerPort}` are to be substituted with actual values below.
